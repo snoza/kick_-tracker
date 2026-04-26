@@ -420,7 +420,7 @@
 
 <script>
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  CONFIG — ENHANCED DEBUG VERSION
+//  CONFIG — FIXED VERSION
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const CLIENT_ID    = '01KQ4ZTP7B05RBR0H6WWX996KX';
 const REDIRECT_URI = 'https://snoza.github.io/kick_-tracker';
@@ -445,32 +445,32 @@ async function sha256b64(s){
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  OAUTH
+//  OAUTH — FIXED VERSION
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function startOAuth(){
   console.log('=== STARTING OAUTH ===');
-  const verifier=rand(64);
-  const state=rand(16);
-  const challenge=await sha256b64(verifier);
+  const verifier = rand(64);
+  const state = rand(16);
+  const challenge = await sha256b64(verifier);
   
-  console.log('Generated verifier:', verifier);
-  console.log('Generated state:', state);
-  console.log('Generated challenge:', challenge);
+  console.log('Generated verifier length:', verifier.length);
+  console.log('Generated state length:', state.length);
   
-  sessionStorage.setItem('pkce_v',verifier);
-  sessionStorage.setItem('oauth_s',state);
+  sessionStorage.setItem('pkce_v', verifier);
+  sessionStorage.setItem('oauth_s', state);
   
-  const u=new URL('https://id.kick.com/oauth/authorize');
-  u.searchParams.set('client_id',CLIENT_ID);
-  u.searchParams.set('redirect_uri',REDIRECT_URI);
-  u.searchParams.set('response_type','code');
-  u.searchParams.set('scope',SCOPES);
-  u.searchParams.set('state',state);
-  u.searchParams.set('code_challenge',challenge);
-  u.searchParams.set('code_challenge_method','S256');
+  // Build URL manually to avoid encoding issues
+  const authUrl = 'https://id.kick.com/oauth/authorize?' + 
+    'client_id=' + CLIENT_ID +
+    '&redirect_uri=' + encodeURIComponent(REDIRECT_URI) +
+    '&response_type=code' +
+    '&scope=' + encodeURIComponent(SCOPES) +
+    '&state=' + state +
+    '&code_challenge=' + challenge +
+    '&code_challenge_method=S256';
   
-  console.log('Auth URL:', u.toString());
-  window.location.href=u.toString();
+  console.log('Auth URL:', authUrl);
+  window.location.href = authUrl;
 }
 
 async function handleCallback(code, state) {
@@ -478,14 +478,12 @@ async function handleCallback(code, state) {
   console.log('1. Code received:', code);
   console.log('2. State received:', state);
   console.log('3. Stored state:', sessionStorage.getItem('oauth_s'));
-  console.log('4. Stored verifier:', sessionStorage.getItem('pkce_v'));
+  console.log('4. Stored verifier exists:', !!sessionStorage.getItem('pkce_v'));
   console.log('5. Client ID:', CLIENT_ID);
   console.log('6. Redirect URI:', REDIRECT_URI);
   
   if (state !== sessionStorage.getItem('oauth_s')) {
     console.error('STATE MISMATCH!');
-    console.error('Expected:', sessionStorage.getItem('oauth_s'));
-    console.error('Got:', state);
     showToast('❌ خطأ في التحقق');
     return;
   }
@@ -500,7 +498,7 @@ async function handleCallback(code, state) {
     code_verifier: sessionStorage.getItem('pkce_v')
   });
   
-  console.log('7. Request body:', requestBody.toString());
+  console.log('7. Request body sent to token endpoint');
   
   try {
     console.log('8. Sending POST request to https://id.kick.com/oauth/token');
@@ -511,25 +509,24 @@ async function handleCallback(code, state) {
     });
     
     console.log('9. Response status:', res.status);
-    console.log('10. Response headers:', [...res.headers.entries()]);
     
     const responseText = await res.text();
-    console.log('11. Response body:', responseText);
+    console.log('10. Response body:', responseText || '(empty)');
     
     if (!res.ok) {
-      showToast(`❌ فشل تسجيل الدخول: ${res.status} - ${responseText.substring(0, 100)}`);
+      showToast(`❌ فشل تسجيل الدخول: ${res.status}`);
       return;
     }
     
     const d = JSON.parse(responseText);
-    console.log('12. Success! Token received');
+    console.log('11. Success! Token received');
     sessionStorage.setItem('kick_token', d.access_token);
     sessionStorage.removeItem('pkce_v');
     sessionStorage.removeItem('oauth_s');
     history.replaceState({}, '', window.location.pathname);
     await initApp();
   } catch (e) {
-    console.error('13. Auth error:', e);
+    console.error('12. Auth error:', e);
     showToast('❌ خطأ في الاتصال: ' + e.message);
   }
 }
