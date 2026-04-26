@@ -427,9 +427,11 @@
 
 <script>
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  CONFIG — تم تحديث CLIENT_ID
+//  CONFIG — GitHub Pages URL
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const CLIENT_ID    = '01KQ4ZTP7B05RBR0H6WWX996KX';
+// IMPORTANT: The redirect_uri will be dynamically set to your current URL
+// Make sure your Kick app has: https://snoza.github.io/kick_-tracker
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 const SCOPES       = 'user:read channel:read';
 
