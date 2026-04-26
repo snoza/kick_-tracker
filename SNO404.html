@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>البثوث المجدولة | Kick</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #53fc18;
+    --green-dim: #2a7d0c;
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #222;
+    --text: #f0f0f0;
+    --muted: #666;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--green);
+  }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  #user-info {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  #user-info img {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+  }
+
+  #user-info span { color: var(--text); font-weight: 600; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .btn-primary { background: var(--green); color: #000; }
+  .btn-primary:hover { background: #6dff2e; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: #444; }
+
+  /* ─── LOGIN SCREEN ─── */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 65px);
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .hero-icon {
+    width: 80px; height: 80px;
+    background: var(--green);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 28px;
+    box-shadow: 0 0 40px #53fc1840;
+  }
+
+  .hero-icon svg { width: 44px; height: 44px; }
+
+  #login-screen h1 { font-size: 2rem; font-weight: 900; margin-bottom: 12px; }
+  #login-screen h1 span { color: var(--green); }
+
+  #login-screen p {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 380px;
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+
+  /* ─── MAIN APP ─── */
+  #app { display: none; padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .filters h2 { font-size: 1.2rem; font-weight: 700; flex: 1; }
+
+  .filter-tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 6px 16px;
+    border-radius: 7px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .tab.active { background: var(--green); color: #000; }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* ─── CARDS ─── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+
+  .stream-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.25s;
+    animation: fadeIn 0.35s ease both;
+  }
+
+  .stream-card:hover {
+    border-color: var(--green-dim);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(83,252,24,0.08);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-banner { height: 10px; background: linear-gradient(90deg, var(--green), #2af598); }
+  .card-body { padding: 16px 18px; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .avatar {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .avatar-placeholder {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--green);
+    flex-shrink: 0;
+  }
+
+  .streamer-info { flex: 1; min-width: 0; }
+
+  .streamer-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .streamer-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .live-badge {
+    background: #ff4444;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .live-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
+
+  .stream-title {
+    font-size: 0.88rem;
+    color: var(--text);
+    margin-bottom: 14px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  .meta-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .meta-pill.countdown {
+    background: rgba(83,252,24,0.08);
+    border-color: var(--green-dim);
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  .card-footer {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .watch-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--green);
+    color: #000;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 6px 14px;
+    border-radius: 7px;
+    transition: all 0.2s;
+  }
+  .watch-link:hover { background: #6dff2e; }
+
+  .notify-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .notify-btn:hover { border-color: var(--green-dim); color: var(--green); }
+  .notify-btn.active { border-color: var(--green); color: var(--green); background: rgba(83,252,24,0.08); }
+
+  /* ─── STATES ─── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+    grid-column: 1/-1;
+  }
+  .empty-state strong { display: block; font-size: 1rem; color: var(--text); margin-bottom: 6px; }
+  .empty-state p { font-size: 0.9rem; }
+
+  .skeleton-card {
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 14px;
+    height: 220px;
+    border: 1px solid var(--border);
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+
+  /* ─── TOAST ─── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: transform 0.3s;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    #app { padding: 20px 16px; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .filters { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M2 2v15l5-5h15V2H2zm13 10H7V4h8v8zm2-2V6l3 3-3 3z"/></svg>
+    البثوث المجدولة
+  </div>
+  <div class="header-right">
+    <div id="user-info">
+      <img id="user-avatar" src="" alt="">
+      <span id="user-name"></span>
+    </div>
+    <button class="btn btn-ghost" id="logout-btn" style="display:none" onclick="logout()">خروج</button>
+    <button class="btn btn-primary" id="login-btn" onclick="startOAuth()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 2v15l5-5h15V2H2z"/></svg>
+      دخول بـ Kick
+    </button>
+  </div>
+</header>
+
+<div id="login-screen">
+  <div class="hero-icon">
+    <svg viewBox="0 0 24 24" fill="#000"><path d="M8 5v14l11-7z"/></svg>
+  </div>
+  <h1>بثوث من <span>تتابع</span></h1>
+  <p>سجّل دخولك بحساب Kick وشوف البثوث المجدولة والمباشرة لكل الستريمرز اللي تتابعهم</p>
+  <button class="btn btn-primary" style="font-size:1rem;padding:12px 32px" onclick="startOAuth()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2 2v15l5-5h15V2H2z"/></svg>
+    دخول بـ Kick
+  </button>
+</div>
+
+<div id="app">
+  <div class="filters">
+    <h2>📅 البثوث المجدولة</h2>
+    <div class="filter-tabs">
+      <button class="tab active" onclick="filterCards('all',this)">الكل</button>
+      <button class="tab" onclick="filterCards('live',this)">يبث الآن 🔴</button>
+      <button class="tab" onclick="filterCards('today',this)">اليوم</button>
+      <button class="tab" onclick="filterCards('upcoming',this)">قادم</button>
+    </div>
+    <button class="btn btn-ghost" onclick="loadData()" style="font-size:0.82rem;padding:7px 14px">🔄 تحديث</button>
+  </div>
+  <div class="cards-grid" id="cards-grid"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  CONFIG — تم تحديث CLIENT_ID
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const CLIENT_ID    = '01KQ4ZTP7B05RBR0H6WWX996KX';
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+const SCOPES       = 'user:read channel:read';
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  PKCE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function rand(n=64){
+  const a=new Uint8Array(n);
+  crypto.getRandomValues(a);
+  return btoa(String.fromCharCode(...a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function sha256b64(s){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  OAUTH
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function startOAuth(){
+  const verifier=rand(64), state=rand(16);
+  const challenge=await sha256b64(verifier);
+  sessionStorage.setItem('pkce_v',verifier);
+  sessionStorage.setItem('oauth_s',state);
+  const u=new URL('https://id.kick.com/oauth/authorize');
+  u.searchParams.set('client_id',CLIENT_ID);
+  u.searchParams.set('redirect_uri',REDIRECT_URI);
+  u.searchParams.set('response_type','code');
+  u.searchParams.set('scope',SCOPES);
+  u.searchParams.set('state',state);
+  u.searchParams.set('code_challenge',challenge);
+  u.searchParams.set('code_challenge_method','S256');
+  window.location.href=u.toString();
+}
+
+async function handleCallback(code,state){
+  if(state!==sessionStorage.getItem('oauth_s')){
+    showToast('❌ خطأ في التحقق');
+    return;
+  }
+  showToast('⏳ جاري تسجيل الدخول...');
+  try {
+    const res=await fetch('https://id.kick.com/oauth/token',{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({
+        grant_type:'authorization_code',
+        client_id:CLIENT_ID,
+        redirect_uri:REDIRECT_URI,
+        code,
+        code_verifier:sessionStorage.getItem('pkce_v')
+      })
+    });
+    if(!res.ok){
+      const errorText = await res.text();
+      console.error('Token error:', errorText);
+      showToast('❌ فشل تسجيل الدخول');
+      return;
+    }
+    const d=await res.json();
+    sessionStorage.setItem('kick_token',d.access_token);
+    sessionStorage.removeItem('pkce_v');
+    sessionStorage.removeItem('oauth_s');
+    history.replaceState({},'',window.location.pathname);
+    await initApp();
+  } catch(e) {
+    console.error('Auth error:', e);
+    showToast('❌ خطأ في الاتصال');
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem('kick_token');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-btn').style.display='flex';
+  document.getElementById('logout-btn').style.display='none';
+  document.getElementById('user-info').style.display='none';
+  allStreams = [];
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const token=()=>sessionStorage.getItem('kick_token');
+
+async function kickGet(path){
+  const r=await fetch('https://api.kick.com/public/v1'+path,{
+    headers:{'Authorization':'Bearer '+token()}
+  });
+  if(!r.ok) throw new Error(r.status+' '+path);
+  return r.json();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function initApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('login-btn').style.display='none';
+  document.getElementById('logout-btn').style.display='flex';
+  try{
+    const me=await kickGet('/users/me');
+    const u=me.data||me;
+    const userName = u.username || u.name || 'مستخدم';
+    document.getElementById('user-name').textContent = userName;
+    if(u.profile_pic) document.getElementById('user-avatar').src=u.profile_pic;
+    document.getElementById('user-info').style.display='flex';
+  }catch(e){
+    console.warn('user/me:',e);
+  }
+  await loadData();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  LOAD DATA
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let allStreams=[];
+
+async function loadData(){
+  const grid=document.getElementById('cards-grid');
+  grid.innerHTML=Array(6).fill('<div class="skeleton-card"></div>').join('');
+  try{
+    // 1. Get followed channels
+    const fRes=await kickGet('/channels/followed?limit=100');
+    const channels=fRes.data||[];
+    if(!channels.length){
+      grid.innerHTML=empty('لا يوجد متابَعون','اتبع بعض الستريمرز على Kick أولاً');
+      return;
+    }
+    // 2. Fetch info per channel in parallel
+    const settled=await Promise.allSettled(
+      channels.map(async ch=>{
+        const slug = ch.slug || ch.channel_slug || ch.username || ch.broadcaster_username;
+        if(!slug) return null;
+        try {
+          const info=await kickGet('/channels?slug='+encodeURIComponent(slug));
+          const d=Array.isArray(info.data)?info.data[0]:info.data;
+          return buildStream(ch,d);
+        } catch(e) {
+          console.warn(`Failed to fetch ${slug}:`, e);
+          return null;
+        }
+      })
+    );
+    allStreams=settled
+      .filter(r=>r.status==='fulfilled' && r.value && r.value.show)
+      .map(r=>r.value);
+    renderCards(allStreams);
+  }catch(e){
+    console.error(e);
+    grid.innerHTML=empty('خطأ في التحميل',e.message);
+    showToast('❌ '+e.message);
+  }
+}
+
+function buildStream(ch,info){
+  const isLive=!!(info?.livestream);
+  const schedules=info?.stream_schedules || [];
+  const next=nextSchedule(schedules);
+  const show=isLive || !!next;
+  
+  const slug = ch.slug || ch.channel_slug || ch.username || ch.broadcaster_username || '';
+  const name = info?.user?.username || ch.username || ch.name || 'Unknown';
+  const avatar = info?.user?.profile_pic || '';
+  const category = isLive ? (info?.livestream?.categories?.[0]?.name || '') : (next?.category_name || '');
+  const title = isLive ? (info?.livestream?.session_title || 'بث مباشر') : (next?.title || 'بث مجدول');
+  const viewers = info?.livestream?.viewer_count || null;
+  const startTime = isLive ? null : (next?.start_time || null);
+  
+  return {
+    show,
+    slug,
+    name,
+    avatar,
+    category,
+    title,
+    isLive,
+    viewers,
+    startTime,
+  };
+}
+
+function nextSchedule(arr){
+  if(!arr?.length) return null;
+  const now=Date.now();
+  return arr
+    .map(s=>({...s, ts:new Date(s.start_time).getTime()}))
+    .filter(s=>!isNaN(s.ts) && s.ts > now - 3600000)
+    .sort((a,b)=>a.ts-b.ts)[0] || null;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  RENDER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let currentFilter='all';
+
+function filterCards(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards(allStreams);
+}
+
+function renderCards(streams){
+  const grid=document.getElementById('cards-grid');
+  const now=new Date();
+  let list=streams;
+  
+  if(currentFilter==='live') {
+    list=streams.filter(s=>s.isLive);
+  } else if(currentFilter==='today') {
+    list=streams.filter(s=>{
+      if(s.isLive) return true;
+      if(!s.startTime) return false;
+      return new Date(s.startTime).toDateString()===now.toDateString();
+    });
+  } else if(currentFilter==='upcoming') {
+    list=streams.filter(s=>!s.isLive && s.startTime);
+  }
+
+  if(!list.length){
+    let emptyMsg = '';
+    if(currentFilter==='live') emptyMsg = 'لا أحد يبث الآن';
+    else if(currentFilter==='today') emptyMsg = 'لا توجد بثوث اليوم';
+    else if(currentFilter==='upcoming') emptyMsg = 'لا توجد بثوث قادمة';
+    else emptyMsg = 'لا توجد بثوث';
+    grid.innerHTML=empty('لا توجد بثوث', emptyMsg);
+    return;
+  }
+
+  list=[...list].sort((a,b)=>{
+    if(a.isLive && !b.isLive) return -1;
+    if(!a.isLive && b.isLive) return 1;
+    if(a.startTime && b.startTime) return new Date(a.startTime)-new Date(b.startTime);
+    return 0;
+  });
+
+  grid.innerHTML=list.map((s,i)=>cardHTML(s,i)).join('');
+}
+
+function cardHTML(s,i){
+  const avatarHtml = s.avatar 
+    ? `<img class="avatar" src="${escapeHtml(s.avatar)}" alt="${escapeHtml(s.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    : '';
+  const placeholderHtml = `<div class="avatar-placeholder" style="${s.avatar ? 'display:none' : ''}">${(s.name[0] || '?').toUpperCase()}</div>`;
+  const liveBadge = s.isLive ? '<div class="live-badge">LIVE</div>' : '';
+  const viewersHtml = s.viewers != null ? `<span class="meta-pill">👁 ${formatNumber(s.viewers)}</span>` : '';
+  const timeHtml = (!s.isLive && s.startTime) ? `<span class="meta-pill countdown">⏰ ${formatTime(s.startTime)}</span>` : '';
+  const categoryHtml = s.category ? `<span class="meta-pill">🎮 ${escapeHtml(s.category)}</span>` : '';
+  const isNotified = notified.has(s.slug);
+  
+  return `<div class="stream-card" style="animation-delay:${i*0.06}s">
+    <div class="card-banner"></div>
+    <div class="card-body">
+      <div class="card-header">
+        ${avatarHtml}${placeholderHtml}
+        <div class="streamer-info">
+          <div class="streamer-name">${escapeHtml(s.name)}</div>
+          <div class="streamer-sub">kick.com/${escapeHtml(s.slug)}</div>
+        </div>
+        ${liveBadge}
+      </div>
+      <div class="stream-title">${escapeHtml(s.title)}</div>
+      <div class="card-meta">${viewersHtml}${timeHtml}${categoryHtml}</div>
+      <div class="card-footer">
+        <a class="watch-link" href="https://kick.com/${escapeHtml(s.slug)}" target="_blank">
+          ▶ ${s.isLive ? 'شاهد الآن' : 'زيارة القناة'}
+        </a>
+        <button class="notify-btn ${isNotified ? 'active' : ''}" onclick="toggleNotify(this,'${escapeHtml(s.slug)}')" title="تنبيه">🔔</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function empty(title, msg){
+  return `<div class="empty-state"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(msg)}</p></div>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  UTILS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const notified = new Set(JSON.parse(localStorage.getItem('notified') || '[]'));
+
+function toggleNotify(btn, slug){
+  if(notified.has(slug)){
+    notified.delete(slug);
+    btn.classList.remove('active');
+    showToast('🔕 تم إلغاء التنبيه');
+  }else{
+    notified.add(slug);
+    btn.classList.add('active');
+    showToast('🔔 سيتم تنبيهك عند البدء');
+  }
+  localStorage.setItem('notified', JSON.stringify([...notified]));
+}
+
+function formatTime(iso){
+  const diff = new Date(iso) - Date.now();
+  if(diff < 0) return 'قريباً';
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if(h > 0) return `بعد ${h} س ${m} د`;
+  if(m > 0) return `بعد ${m} دقيقة`;
+  return 'الآن';
+}
+
+function formatNumber(n){
+  return n >= 1000 ? (n/1000).toFixed(1) + 'K' : String(n);
+}
+
+function escapeHtml(s){
+  if(!s) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+let toastTimer;
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Auto-refresh cards display every minute
+setInterval(()=>{ 
+  if(allStreams.length) renderCards(allStreams); 
+}, 60000);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  BOOT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(async()=>{
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const state = params.get('state');
+  if(code && state) {
+    await handleCallback(code, state);
+  } else if(token()) {
+    await initApp();
+  }
+})();
+</script>
+</body>
+</html>
