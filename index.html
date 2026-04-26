@@ -27,7 +27,6 @@
     min-height: 100vh;
   }
 
-  /* ─── HEADER ─── */
   header {
     display: flex;
     align-items: center;
@@ -67,7 +66,6 @@
 
   #user-info span { color: var(--text); font-weight: 600; }
 
-  /* ─── BUTTONS ─── */
   .btn {
     padding: 9px 20px;
     border-radius: 8px;
@@ -92,7 +90,6 @@
   }
   .btn-ghost:hover { color: var(--text); border-color: #444; }
 
-  /* ─── LOGIN SCREEN ─── */
   #login-screen {
     display: flex;
     flex-direction: column;
@@ -125,7 +122,6 @@
     margin-bottom: 32px;
   }
 
-  /* ─── MAIN APP ─── */
   #app { display: none; padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
 
   .filters {
@@ -162,7 +158,6 @@
   .tab.active { background: var(--green); color: #000; }
   .tab:hover:not(.active) { color: var(--text); }
 
-  /* ─── CARDS ─── */
   .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -330,7 +325,6 @@
   .notify-btn:hover { border-color: var(--green-dim); color: var(--green); }
   .notify-btn.active { border-color: var(--green); color: var(--green); background: rgba(83,252,24,0.08); }
 
-  /* ─── STATES ─── */
   .empty-state {
     text-align: center;
     padding: 80px 20px;
@@ -350,7 +344,6 @@
   }
   @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
 
-  /* ─── TOAST ─── */
   #toast {
     position: fixed;
     bottom: 24px;
@@ -427,12 +420,10 @@
 
 <script>
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  CONFIG — GitHub Pages URL
+//  CONFIG — UPDATED WITH HARDCODED REDIRECT URI
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const CLIENT_ID    = '01KQ4ZTP7B05RBR0H6WWX996KX';
-// IMPORTANT: The redirect_uri will be dynamically set to your current URL
-// Make sure your Kick app has: https://snoza.github.io/kick_-tracker
-const REDIRECT_URI = window.location.origin + window.location.pathname;
+const REDIRECT_URI = 'https://snoza.github.io/kick_-tracker';
 const SCOPES       = 'user:read channel:read';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -469,12 +460,19 @@ async function startOAuth(){
 }
 
 async function handleCallback(code,state){
+  console.log('=== HANDLE CALLBACK START ===');
+  console.log('Code:', code);
+  console.log('State:', state);
+  console.log('Stored state:', sessionStorage.getItem('oauth_s'));
+  
   if(state!==sessionStorage.getItem('oauth_s')){
+    console.error('STATE MISMATCH!');
     showToast('❌ خطأ في التحقق');
     return;
   }
   showToast('⏳ جاري تسجيل الدخول...');
   try {
+    console.log('Fetching token with redirect_uri:', REDIRECT_URI);
     const res=await fetch('https://id.kick.com/oauth/token',{
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
@@ -486,13 +484,15 @@ async function handleCallback(code,state){
         code_verifier:sessionStorage.getItem('pkce_v')
       })
     });
+    console.log('Response status:', res.status);
     if(!res.ok){
       const errorText = await res.text();
-      console.error('Token error:', errorText);
-      showToast('❌ فشل تسجيل الدخول');
+      console.error('Token error response:', errorText);
+      showToast('❌ فشل تسجيل الدخول: ' + res.status);
       return;
     }
     const d=await res.json();
+    console.log('Token response success!');
     sessionStorage.setItem('kick_token',d.access_token);
     sessionStorage.removeItem('pkce_v');
     sessionStorage.removeItem('oauth_s');
@@ -500,7 +500,7 @@ async function handleCallback(code,state){
     await initApp();
   } catch(e) {
     console.error('Auth error:', e);
-    showToast('❌ خطأ في الاتصال');
+    showToast('❌ خطأ في الاتصال: ' + e.message);
   }
 }
 
@@ -557,14 +557,12 @@ async function loadData(){
   const grid=document.getElementById('cards-grid');
   grid.innerHTML=Array(6).fill('<div class="skeleton-card"></div>').join('');
   try{
-    // 1. Get followed channels
     const fRes=await kickGet('/channels/followed?limit=100');
     const channels=fRes.data||[];
     if(!channels.length){
       grid.innerHTML=empty('لا يوجد متابَعون','اتبع بعض الستريمرز على Kick أولاً');
       return;
     }
-    // 2. Fetch info per channel in parallel
     const settled=await Promise.allSettled(
       channels.map(async ch=>{
         const slug = ch.slug || ch.channel_slug || ch.username || ch.broadcaster_username;
@@ -764,7 +762,6 @@ function showToast(msg){
   toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// Auto-refresh cards display every minute
 setInterval(()=>{ 
   if(allStreams.length) renderCards(allStreams); 
 }, 60000);
