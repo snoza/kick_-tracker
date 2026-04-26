@@ -420,11 +420,15 @@
 
 <script>
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  CONFIG — UPDATED WITH HARDCODED REDIRECT URI
+//  CONFIG — ENHANCED DEBUG VERSION
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const CLIENT_ID    = '01KQ4ZTP7B05RBR0H6WWX996KX';
 const REDIRECT_URI = 'https://snoza.github.io/kick_-tracker';
 const SCOPES       = 'user:read channel:read';
+
+console.log('=== APP LOADED ===');
+console.log('Client ID:', CLIENT_ID);
+console.log('Redirect URI:', REDIRECT_URI);
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  PKCE
@@ -444,10 +448,18 @@ async function sha256b64(s){
 //  OAUTH
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function startOAuth(){
-  const verifier=rand(64), state=rand(16);
+  console.log('=== STARTING OAUTH ===');
+  const verifier=rand(64);
+  const state=rand(16);
   const challenge=await sha256b64(verifier);
+  
+  console.log('Generated verifier:', verifier);
+  console.log('Generated state:', state);
+  console.log('Generated challenge:', challenge);
+  
   sessionStorage.setItem('pkce_v',verifier);
   sessionStorage.setItem('oauth_s',state);
+  
   const u=new URL('https://id.kick.com/oauth/authorize');
   u.searchParams.set('client_id',CLIENT_ID);
   u.searchParams.set('redirect_uri',REDIRECT_URI);
@@ -456,50 +468,68 @@ async function startOAuth(){
   u.searchParams.set('state',state);
   u.searchParams.set('code_challenge',challenge);
   u.searchParams.set('code_challenge_method','S256');
+  
+  console.log('Auth URL:', u.toString());
   window.location.href=u.toString();
 }
 
-async function handleCallback(code,state){
+async function handleCallback(code, state) {
   console.log('=== HANDLE CALLBACK START ===');
-  console.log('Code:', code);
-  console.log('State:', state);
-  console.log('Stored state:', sessionStorage.getItem('oauth_s'));
+  console.log('1. Code received:', code);
+  console.log('2. State received:', state);
+  console.log('3. Stored state:', sessionStorage.getItem('oauth_s'));
+  console.log('4. Stored verifier:', sessionStorage.getItem('pkce_v'));
+  console.log('5. Client ID:', CLIENT_ID);
+  console.log('6. Redirect URI:', REDIRECT_URI);
   
-  if(state!==sessionStorage.getItem('oauth_s')){
+  if (state !== sessionStorage.getItem('oauth_s')) {
     console.error('STATE MISMATCH!');
+    console.error('Expected:', sessionStorage.getItem('oauth_s'));
+    console.error('Got:', state);
     showToast('❌ خطأ في التحقق');
     return;
   }
+  
   showToast('⏳ جاري تسجيل الدخول...');
+  
+  const requestBody = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    code: code,
+    code_verifier: sessionStorage.getItem('pkce_v')
+  });
+  
+  console.log('7. Request body:', requestBody.toString());
+  
   try {
-    console.log('Fetching token with redirect_uri:', REDIRECT_URI);
-    const res=await fetch('https://id.kick.com/oauth/token',{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:new URLSearchParams({
-        grant_type:'authorization_code',
-        client_id:CLIENT_ID,
-        redirect_uri:REDIRECT_URI,
-        code,
-        code_verifier:sessionStorage.getItem('pkce_v')
-      })
+    console.log('8. Sending POST request to https://id.kick.com/oauth/token');
+    const res = await fetch('https://id.kick.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: requestBody
     });
-    console.log('Response status:', res.status);
-    if(!res.ok){
-      const errorText = await res.text();
-      console.error('Token error response:', errorText);
-      showToast('❌ فشل تسجيل الدخول: ' + res.status);
+    
+    console.log('9. Response status:', res.status);
+    console.log('10. Response headers:', [...res.headers.entries()]);
+    
+    const responseText = await res.text();
+    console.log('11. Response body:', responseText);
+    
+    if (!res.ok) {
+      showToast(`❌ فشل تسجيل الدخول: ${res.status} - ${responseText.substring(0, 100)}`);
       return;
     }
-    const d=await res.json();
-    console.log('Token response success!');
-    sessionStorage.setItem('kick_token',d.access_token);
+    
+    const d = JSON.parse(responseText);
+    console.log('12. Success! Token received');
+    sessionStorage.setItem('kick_token', d.access_token);
     sessionStorage.removeItem('pkce_v');
     sessionStorage.removeItem('oauth_s');
-    history.replaceState({},'',window.location.pathname);
+    history.replaceState({}, '', window.location.pathname);
     await initApp();
-  } catch(e) {
-    console.error('Auth error:', e);
+  } catch (e) {
+    console.error('13. Auth error:', e);
     showToast('❌ خطأ في الاتصال: ' + e.message);
   }
 }
@@ -531,6 +561,7 @@ async function kickGet(path){
 //  INIT
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function initApp(){
+  console.log('=== INIT APP ===');
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('login-btn').style.display='none';
@@ -542,8 +573,9 @@ async function initApp(){
     document.getElementById('user-name').textContent = userName;
     if(u.profile_pic) document.getElementById('user-avatar').src=u.profile_pic;
     document.getElementById('user-info').style.display='flex';
+    console.log('User logged in:', userName);
   }catch(e){
-    console.warn('user/me:',e);
+    console.warn('user/me:', e);
   }
   await loadData();
 }
